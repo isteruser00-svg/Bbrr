@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tatlı Battaniye</title>
+
+<style>
+html,body{
+    margin:0;
+    padding:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#090b14;
+}
+
+canvas{
+    width:100%;
+    height:100%;
+    display:block;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="c"></canvas>
+
+<script>
+const canvas=document.getElementById("c");
+const ctx=canvas.getContext("2d");
+
+let w=0;
+let h=0;
+let scale=1;
+
+function resize(){
+    w=window.innerWidth;
+    h=window.innerHeight;
+
+    const dpr=window.devicePixelRatio || 1;
+
+    canvas.width=w*dpr;
+    canvas.height=h*dpr;
+
+    canvas.style.width=w+"px";
+    canvas.style.height=h+"px";
+
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+
+    scale=Math.min(w/900,h/650);
+}
+
+window.addEventListener("resize",resize);
+resize();
+
+
+function roundRect(x,y,width,height,r,fill=true){
+
+    ctx.beginPath();
+    ctx.roundRect(x,y,width,height,r);
+
+    if(fill){
+        ctx.fill();
+    }else{
+        ctx.stroke();
+    }
+}
+
+
+function ease(t){
+    t=Math.max(0,Math.min(1,t));
+    return t*t*(3-2*t);
+}
+
+
+/* =========================
+   ANA ANİMASYON
+========================= */
+
+const beginning=performance.now();
+
+function animate(now){
+
+    const time=((now-beginning)/1000)%8;
+
+    ctx.clearRect(0,0,w,h);
+
+    ctx.save();
+
+    ctx.translate(w/2,h/2);
+    ctx.scale(scale,scale);
+
+    drawRoom();
+    drawBed();
+
+    let pull=0;
+
+    if(time<1.5){
+        pull=0;
+    }
+    else if(time<3.7){
+        pull=ease((time-1.5)/2.2);
+    }
+    else{
+        pull=1;
+    }
+
+    drawCharacter(time);
+    drawBlanket(pull);
+
+    drawVignette();
+
+    ctx.restore();
+
+    requestAnimationFrame(animate);
+}
+
+requestAnimationFrame(animate);
+
+
+/* =========================
+   ODA
+========================= */
+
+function drawRoom(){
+
+    const bg=ctx.createLinearGradient(
+        0,-350,
+        0,350
+    );
+
+    bg.addColorStop(0,"#181b2d");
+    bg.addColorStop(.6,"#101423");
+    bg.addColorStop(1,"#080a11");
+
+    ctx.fillStyle=bg;
+
+    ctx.fillRect(
+        -600,
+        -400,
+        1200,
+        800
+    );
+
+
+    /* pencere */
+
+    ctx.fillStyle="#070b16";
+
+    roundRect(
+        -340,
+        -270,
+        220,
+        145,
+        12
+    );
+
+    ctx.strokeStyle="#394057";
+    ctx.lineWidth=6;
+
+    roundRect(
+        -340,
+        -270,
+        220,
+        145,
+        12,
+        false
+    );
+
+
+    ctx.strokeStyle="#252c40";
+    ctx.lineWidth=4;
+
+    ctx.beginPath();
+
+    ctx.moveTo(-230,-270);
+    ctx.lineTo(-230,-125);
+
+    ctx.moveTo(-340,-198);
+    ctx.lineTo(-120,-198);
+
+    ctx.stroke();
+
+
+    /* ay */
+
+    ctx.fillStyle="#f0f2ff";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        -190,
+        -220,
+        24,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    ctx.fillStyle="#070b16";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        -178,
+        -228,
+        24,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /* yıldızlar */
+
+    for(let i=0;i<13;i++){
+
+        const x=-325+(i*43)%185;
+        const y=-255+(i*27)%115;
+
+        ctx.fillStyle="rgba(255,255,255,.65)";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x,
+            y,
+            1.5,
+            0,
+            Math.PI*2
+        );
+
+        ctx.fill();
+    }
+
+
+    /* komodin */
+
+    ctx.fillStyle="#2b2435";
+
+    roundRect(
+        260,
+        -105,
+        120,
+        165,
+        9
+    );
+
+
+    ctx.fillStyle="#3a3044";
+
+    roundRect(
+        273,
+        -75,
+        94,
+        42,
+        6
+    );
+
+    roundRect(
+        273,
+        -20,
+        94,
+        42,
+        6
+    );
+
+
+    /* lamba */
+
+    ctx.fillStyle="#4d4251";
+
+    ctx.fillRect(
+        315,
+        -145,
+        6,
+        42
+    );
+
+    ctx.fillStyle="#e4b46d";
+
+    ctx.beginPath();
+
+    ctx.moveTo(285,-157);
+    ctx.lineTo(350,-157);
+    ctx.lineTo(336,-112);
+    ctx.lineTo(298,-112);
+
+    ctx.closePath();
+
+    ctx.fill();
+}
+
+
+/* =========================
+   YATAK
+========================= */
+
+function drawBed(){
+
+    /* gölge */
+
+    ctx.fillStyle="rgba(0,0,0,.55)";
+
+    roundRect(
+        -420,
+        145,
+        840,
+        180,
+        35
+    );
+
+
+    /* baza */
+
+    const base=ctx.createLinearGradient(
+        0,
+        90,
+        0,
+        310
+    );
+
+    base.addColorStop(0,"#45354a");
+    base.addColorStop(1,"#17131e");
+
+    ctx.fillStyle=base;
+
+    roundRect(
+        -400,
+        95,
+        800,
+        220,
+        28
+    );
+
+
+    /* başlık */
+
+    ctx.fillStyle="#3c3042";
+
+    roundRect(
+        -420,
+        -15,
+        840,
+        155,
+        30
+    );
+
+
+    /* yatak */
+
+    const mattress=ctx.createLinearGradient(
+        0,
+        45,
+        0,
+        210
+    );
+
+    mattress.addColorStop(0,"#eee8e8");
+    mattress.addColorStop(1,"#a9a1a9");
+
+    ctx.fillStyle=mattress;
+
+    roundRect(
+        -395,
+        45,
+        790,
+        165,
+        35
+    );
+
+
+    /* yastık */
+
+    ctx.fillStyle="#eee9e8";
+
+    roundRect(
+        -320,
+        -10,
+        210,
+        85,
+        28
+    );
+
+    roundRect(
+        -90,
+        -10,
+        210,
+        85,
+        28
+    );
+}
+
+
+/* =========================
+   TATLI KARAKTER
+========================= */
+
+function drawCharacter(time){
+
+    const shiver=
+        time>1.5 && time<3.7
+        ? Math.sin(time*35)*2
+        : 0;
+
+    ctx.save();
+
+    ctx.translate(0,shiver);
+
+
+    /* saç arkası */
+
+    ctx.fillStyle="#46334b";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        0,
+        -5,
+        118,
+        110,
+        0,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /* yüz */
+
+    const skin=ctx.createRadialGradient(
+        -28,
+        -45,
+        5,
+        10,
+        20,
+        120
+    );
+
+    skin.addColorStop(0,"#fff0e7");
+    skin.addColorStop(.65,"#ffd9ce");
+    skin.addColorStop(1,"#dfa29b");
+
+    ctx.fillStyle=skin;
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        0,
+        10,
+        90,
+        103,
+        0,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /* kulaklar */
+
+    ctx.fillStyle="#edb5ac";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        -87,
+        20,
+        17,
+        27,
+        0,
+        0,
+        Math.PI*2
+    );
+
+    ctx.ellipse(
+        87,
+        20,
+        17,
+        27,
+        0,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /* saç */
+
+    ctx.fillStyle="#50384f";
+
+    ctx.beginPath();
+
+    ctx.moveTo(-96,-52);
+
+    ctx.bezierCurveTo(
+        -75,-110,
+        -38,-120,
+        -10,-78
+    );
+
+    ctx.bezierCurveTo(
+        10,-120,
+        45,-116,
+        65,-78
+    );
+
+    ctx.bezierCurveTo(
+        88,-105,
+        105,-80,
+        98,-48
+    );
+
+    ctx.bezierCurveTo(
+        72,-63,
+        52,-55,
+        32,-35
+    );
+
+    ctx.bezierCurveTo(
+        18,-60,
+        5,-69,
+        -8,-39
+    );
+
+    ctx.bezierCurveTo(
+        -25,-62,
+        -45,-66,
+        -64,-40
+    );
+
+    ctx.bezierCurveTo(
+        -77,-54,
+        -87,-57,
+        -96,-52
+    );
+
+    ctx.fill();
+
+
+    /* kaş */
+
+    ctx.strokeStyle="#67424e";
+    ctx.lineWidth=4;
+    ctx.lineCap="round";
+
+    ctx.beginPath();
+
+    ctx.moveTo(-54,-4);
+    ctx.quadraticCurveTo(-35,-14,-16,-5);
+
+    ctx.moveTo(16,-5);
+    ctx.quadraticCurveTo(35,-14,54,-4);
+
+    ctx.stroke();
+
+
+    /* gözler */
+
+    cuteEye(-34,20);
+    cuteEye(34,20);
+
+
+    /* burun */
+
+    ctx.fillStyle="#d38c87";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        0,
+        43,
+        3.5,
+        2.5,
+        0,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /* ağız */
+
+    ctx.strokeStyle="#a65b65";
+    ctx.lineWidth=3.5;
+
+    ctx.beginPath();
+
+    ctx.moveTo(-9,61);
+
+    ctx.quadraticCurveTo(
+        0,
+        68,
+        9,
+        61
+    );
+
+    ctx.stroke();
+
+
+    /* yanaklar */
+
+    ctx.fillStyle="rgba(255,110,135,.20)";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        -57,
+        50,
+        24,
+        13,
+        0,
+        0,
+        Math.PI*2
+    );
+
+    ctx.ellipse(
+        57,
+        50,
+        24,
+        13,
+        0,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    ctx.restore();
+}
+
+
+/* =========================
+   GÖZ
+========================= */
+
+function cuteEye(x,y){
+
+    /* beyaz */
+
+    ctx.fillStyle="#fffafa";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        x,
+        y,
+        22,
+        25,
+        0,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /* iris */
+
+    const iris=ctx.createRadialGradient(
+        x-4,
+        y-7,
+        1,
+        x,
+        y+3,
+        18
+    );
+
+    iris.addColorStop(0,"#b795cf");
+    iris.addColorStop(.5,"#714d83");
+    iris.addColorStop(1,"#30233b");
+
+    ctx.fillStyle=iris;
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        x,
+        y+3,
+        12,
+        18,
+        0,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /* göz bebeği */
+
+    ctx.fillStyle="#18131f";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        x,
+        y+5,
+        6,
+        11,
+        0,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /* büyük ışık */
+
+    ctx.fillStyle="#fff";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        x-5,
+        y-6,
+        5,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /* küçük ışık */
+
+    ctx.beginPath();
+
+    ctx.arc(
+        x+5,
+        y+6,
+        2.5,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /* kirpik */
+
+    ctx.strokeStyle="#4d3546";
+    ctx.lineWidth=3;
+    ctx.lineCap="round";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        x,
+        y,
+        19,
+        Math.PI*1.05,
+        Math.PI*1.95
+    );
+
+    ctx.stroke();
+}
+
+
+/* =========================
+   BATTANİYE
+========================= */
+
+function drawBlanket(progress){
+
+    const lift=progress*110;
+    const top=90-lift;
+
+
+    const blanket=ctx.createLinearGradient(
+        0,
+        top,
+        0,
+        310
+    );
+
+    blanket.addColorStop(0,"#ae5d7d");
+    blanket.addColorStop(.3,"#88455f");
+    blanket.addColorStop(.7,"#60344e");
+    blanket.addColorStop(1,"#382038");
+
+    ctx.fillStyle=blanket;
+
+    ctx.beginPath();
+
+    ctx.moveTo(-395,top+28);
+
+    ctx.bezierCurveTo(
+        -325,top-8,
+        -255,top+27,
+        -190,top+8
+    );
+
+    ctx.bezierCurveTo(
+        -125,top-8,
+        -65,top+28,
+        0,top+5
+    );
+
+    ctx.bezierCurveTo(
+        65,top-8,
+        125,top+28,
+        195,top+7
+    );
+
+    ctx.bezierCurveTo(
+        265,top-8,
+        325,top+25,
+        395,top+27
+    );
+
+    ctx.lineTo(395,310);
+    ctx.lineTo(-395,310);
+
+    ctx.closePath();
+
+    ctx.fill();
+
+
+    /* kumaş kıvrımları */
+
+    for(let i=-4;i<=4;i++){
+
+        const x=i*90;
+
+        ctx.strokeStyle=
+            "rgba(255,220,230,.10)";
+
+        ctx.lineWidth=18;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            x-35,
+            top+50
+        );
+
+        ctx.bezierCurveTo(
+            x-5,
+            top+110,
+            x+45,
+            top+150,
+            x+5,
+            300
+        );
+
+        ctx.stroke();
+
+
+        ctx.strokeStyle=
+            "rgba(25,8,25,.18)";
+
+        ctx.lineWidth=8;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            x+25,
+            top+50
+        );
+
+        ctx.bezierCurveTo(
+            x+55,
+            top+120,
+            x-10,
+            top+190,
+            x+30,
+            300
+        );
+
+        ctx.stroke();
+    }
+
+
+    /* üst kenar */
+
+    ctx.strokeStyle=
+        "rgba(255,230,235,.32)";
+
+    ctx.lineWidth=6;
+
+    ctx.beginPath();
+
+    ctx.moveTo(-395,top+28);
+
+    ctx.bezierCurveTo(
+        -325,top-8,
+        -255,top+27,
+        -190,top+8
+    );
+
+    ctx.bezierCurveTo(
+        -125,top-8,
+        -65,top+28,
+        0,top+5
+    );
+
+    ctx.bezierCurveTo(
+        65,top-8,
+        125,top+28,
+        195,top+7
+    );
+
+    ctx.bezierCurveTo(
+        265,top-8,
+        325,top+25,
+        395,top+27
+    );
+
+    ctx.stroke();
+}
+
+
+/* =========================
+   VİGNETTE
+========================= */
+
+function drawVignette(){
+
+    const v=ctx.createRadialGradient(
+        0,
+        0,
+        180,
+        0,
+        0,
+        530
+    );
+
+    v.addColorStop(
+        0,
+        "rgba(0,0,0,0)"
+    );
+
+    v.addColorStop(
+        1,
+        "rgba(0,0,0,.55)"
+    );
+
+    ctx.fillStyle=v;
+
+    ctx.fillRect(
+        -500,
+        -350,
+        1000,
+        700
+    );
+}
+
+</script>
+
+</body>
+</html>
